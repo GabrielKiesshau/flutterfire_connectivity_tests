@@ -15,17 +15,18 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _counter = 0;
-  final db = FirebaseFirestore.instance;
+  final _db = FirebaseFirestore.instance;
   final _connectivity = Connectivity();
+  final _textFieldController = TextEditingController(text: '');
 
   void _incrementCounter() async {
     log('Trying to send data...');
 
     final data = <String, dynamic>{
-      "text": "Hello World",
+      "text": _textFieldController.text,
       "number": 42,
     };
-    db.collection("my_collection").add(data)
+    _db.collection("my_collection").add(data)
       .then(
         (DocumentReference doc) => log('DocumentSnapshot added with ID: ${doc.id}'),
       )
@@ -35,7 +36,7 @@ class _HomePageState extends State<HomePage> {
       "text": "Hello World, I'm back again!",
       "number": 200,
     };
-    db.collection("my_collection").doc('Fy4Zkt0PNPgnH6YuFZyO').update(dataB)
+    _db.collection("my_collection").doc('Fy4Zkt0PNPgnH6YuFZyO').update(dataB)
       .then((_) => log('DocumentSnapshot updated'))
       .catchError((error) => log('Failed: $error'));
     
@@ -48,12 +49,12 @@ class _HomePageState extends State<HomePage> {
 
   void _enableFirebaseConnection() async {
     log('connection ok');
-    await db.enableNetwork()
+    await _db.enableNetwork()
       .then((_) => log('enabled firebase network'));
   }
   void _disableFirebaseConnection() async {
     log('no connection');
-    await db.disableNetwork()
+    await _db.disableNetwork()
       .then((_) => log('disabled firebase network'));
   }
 
@@ -63,21 +64,30 @@ class _HomePageState extends State<HomePage> {
       stream: _connectivity.onConnectivityChanged,
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return const CircularProgressIndicator();
+          return const Material(
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
         }
 
         final connectivityResult = snapshot.data;
+        Color color = Colors.blue;
 
         if (connectivityResult == ConnectivityResult.none) {
           _disableFirebaseConnection();
+          color = Colors.red;
         }
         else {
           _enableFirebaseConnection();
+          color = Colors.blue;
         }
 
         return Scaffold(
           appBar: AppBar(
             title: Text(widget.title),
+            backgroundColor: color,
+            elevation: 0,
           ),
           body: Center(
             child: Column(
@@ -90,12 +100,17 @@ class _HomePageState extends State<HomePage> {
                   '$_counter',
                   style: Theme.of(context).textTheme.headline4,
                 ),
+                TextField(
+                  controller: _textFieldController,
+                ),
               ],
             ),
           ),
           floatingActionButton: FloatingActionButton(
             onPressed: _incrementCounter,
             tooltip: 'Increment',
+            backgroundColor: color,
+            elevation: 0,
             child: const Icon(Icons.add),
           ),
         );
